@@ -21,6 +21,10 @@ provider:
       Action:
         - s3:*
       Resource: arn:aws:s3:::${self:service}-${self:provider.stage}-img-profile/*
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:service}-${self:provider.stage}-menu
 
 functions:
   main:
@@ -53,3 +57,27 @@ resources:
                 - DELETE
                 - HEAD
               MaxAge: 3000
+    MenuTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-menu
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: type
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: typeIndex
+            KeySchema:
+              - AttributeName: type
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
