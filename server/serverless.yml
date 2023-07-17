@@ -1,4 +1,7 @@
-service: serverless-example
+service: menu-app
+frameworkVersion: '3'
+
+useDotenv: true
 
 plugins:
   - serverless-offline
@@ -10,6 +13,14 @@ custom:
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  # stage: prod
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: arn:aws:s3:::${self:service}-${self:provider.stage}-img-profile/*
 
 functions:
   main:
@@ -21,3 +32,24 @@ functions:
       - http:
           method: ANY
           path: '{proxy+}'
+
+resources:
+  Resources:
+    ImgProfileBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${self:provider.stage}-img-profile
+        AccessControl: PublicRead
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              MaxAge: 3000
